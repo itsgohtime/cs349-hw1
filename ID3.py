@@ -25,7 +25,7 @@ def ID3(examples, default):
   # assigns t with most common value
   t.label = max(t.classes, key = t.classes.get)
 
-  #check if the node just has one class
+  #check if most common class is the entire set
   if t.classes[t.label] == len(examples):
     return t
     
@@ -62,12 +62,31 @@ def ID3(examples, default):
 
       information_gain -= (value_count/len(examples)) * value_entropy
     t.attribute_gain[attribute] = information_gain
-    print('information gain', information_gain)
   print(t.attribute_gain)
 
   # finds maximum information gain
   t.decision_attribute = max(zip(t.attribute_gain.values(), t.attribute_gain.keys()))[1]
+
+  a_val = list(set(row[t.decision_attribute] for row in examples))
+
+  for a in a_val:
+    # get subset of examples 
+    D_a = []
+    for dict in examples:
+      if dict[t.decision_attribute] == a:
+        D_a.append(dict.copy())
+    
+    for row in D_a:
+      row.pop(t.decision_attribute)
+
+    if len(D_a) == 0:
+      t_prime = Node()
+      t_prime.label = max(t.classes, key = t.classes.get)
+      t.children[a] = t_prime
+    else:
+      t.children[a] = ID3(D_a, default)
   
+  return t
  
 
 def prune(node, examples):
@@ -88,7 +107,4 @@ def evaluate(node, example):
   Takes in a tree and one example.  Returns the Class value that the tree
   assigns to the example.
   '''
-data =  [dict(a=1, b=0, Class=2), dict(a=1, b=1, Class=1),
-          dict(a=2, b=0, Class=2), dict(a=2, b=1, Class=3),
-          dict(a=3, b=0, Class=1), dict(a=3, b=1, Class=3)]
-tree = ID3(data, 0)
+
