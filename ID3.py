@@ -62,7 +62,6 @@ def ID3(examples, default):
 
       information_gain -= (value_count/len(examples)) * value_entropy
     t.attribute_gain[attribute] = information_gain
-  print(t.attribute_gain)
 
   # finds maximum information gain
   t.decision_attribute = max(zip(t.attribute_gain.values(), t.attribute_gain.keys()))[1]
@@ -87,7 +86,7 @@ def ID3(examples, default):
       t.children[a] = ID3(D_a, default)
   
   return t
- 
+
 
 def prune(node, examples):
   '''
@@ -100,6 +99,18 @@ def test(node, examples):
   Takes in a trained tree and a test set of examples.  Returns the accuracy (fraction
   of examples the tree classifies correctly).
   '''
+  numerator = 0
+  denominator = 0
+  for test in examples:
+    result = evaluate(node, test)
+    if result == test['Class']:
+      numerator += 1
+      denominator += 1
+    else:
+      denominator += 1
+
+  return numerator/denominator
+
 
 
 def evaluate(node, example):
@@ -108,3 +119,12 @@ def evaluate(node, example):
   assigns to the example.
   '''
 
+  if not node.children:
+    return node.label
+  attribute = node.decision_attribute
+  if attribute == None:
+    return node.label
+  attribute_val = example[attribute]
+  if node.children:
+    child_node = node.children[attribute_val]
+    return evaluate(child_node, example)
