@@ -13,13 +13,27 @@ def missing_attributes(examples):
     if missing_data:
       class_data = [row for row in examples if row['Class'] == class_]
       values= list(set(sub[missing_key] for sub in class_data))
-      
-      key_dict = {}
-      for val in values: 
-        if val != '?':
-          key_dict[val] = len([row for row in class_data if row[missing_key] == val])
+      keys = ex.keys()
 
-      ex[missing_key] = max(key_dict)
+      for datapoint in class_data:
+        matching = False
+        if datapoint[missing_key] != '?':
+          matching = True
+          for key in keys:
+            if key != missing_key:
+              if datapoint[key] != ex[key]:
+                matching = False
+        
+        if matching:
+          ex[missing_key] = datapoint[missing_key]
+
+      if ex[missing_key] == '?':
+        key_dict = {}
+        for val in values: 
+          if val != '?':
+            key_dict[val] = len([row for row in class_data if row[missing_key] == val])
+
+        ex[missing_key] = max(key_dict)
 
   return examples
 
@@ -89,6 +103,7 @@ def ID3(examples, default):
 
   # finds maximum information gain
   t.decision_attribute = max(zip(t.attribute_gain.values(), t.attribute_gain.keys()))[1]
+  information_gain =  max(zip(t.attribute_gain.values(), t.attribute_gain.keys()))[0]
 
   a_val = list(set(row[t.decision_attribute] for row in examples))
 
