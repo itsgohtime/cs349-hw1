@@ -1,6 +1,28 @@
 from node import Node
 import math
 
+def missing_attributes(examples):
+  for ex in examples:
+    missing_data = False
+    class_ = ex['Class']
+    for key in ex:
+      if ex[key] == '?':
+        missing_data = True
+        missing_key = key
+
+    if missing_data:
+      class_data = [row for row in examples if row['Class'] == class_]
+      values= list(set(sub[missing_key] for sub in class_data))
+      
+      key_dict = {}
+      for val in values: 
+        if val != '?':
+          key_dict[val] = len([row for row in class_data if row[missing_key] == val])
+
+      ex[missing_key] = max(key_dict)
+
+  return examples
+
 def ID3(examples, default):
   '''
   Takes in an array of examples, and returns a tree (an instance of Node) 
@@ -9,6 +31,8 @@ def ID3(examples, default):
   Any missing attributes are denoted with a value of "?"
   '''
   t = Node()
+
+  examples = missing_attributes(examples)
 
   # find the classes in the examples
   key = 'Class'
@@ -122,8 +146,6 @@ def evaluate(node, example):
   if not node.children:
     return node.label
   attribute = node.decision_attribute
-  if attribute == None:
-    return node.label
   attribute_val = example[attribute]
   if node.children:
     child_node = node.children[attribute_val]
