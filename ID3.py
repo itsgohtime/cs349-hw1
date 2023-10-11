@@ -132,6 +132,24 @@ def prune(node, examples):
   Takes in a trained tree and a validation set of examples.  Prunes nodes in order
   to improve accuracy on the validation data; the precise pruning strategy is up to you.
   '''
+  if not node.children:  # base case, leaf node
+      return 
+
+  current_accuracy = test(node, examples)
+
+  for attr_val, child in node.children.items():
+        # Temporarily remove the child
+      temp_child = node.children[attr_val]
+      del node.children[attr_val]
+        
+      if test(node, examples) < current_accuracy:
+        #if the test without the node reduces the accuracy, add the node back
+          node.children[attr_val] = temp_child
+      else:
+            # Otherwise, pruned successfully, and we'll set its children to empty
+          child.children = {}
+        
+      prune(child, examples)
 
 def test(node, examples):
   '''
