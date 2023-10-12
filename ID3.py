@@ -33,7 +33,14 @@ def missing_attributes(examples):
           if val != '?':
             key_dict[val] = len([row for row in class_data if row[missing_key] == val])
 
-        ex[missing_key] = max(key_dict)
+    # Check if key_dict is empty
+        if key_dict:
+          most_common_value = max(key_dict, key=key_dict.get)
+          ex[missing_key] = most_common_value
+        else:
+        # key_dict is empty; all attribute values are '?'
+        # Either skip or assign a default value; here we skip
+          pass
 
   return examples
 
@@ -128,10 +135,37 @@ def ID3(examples, default):
 
 
 def prune(node, examples):
-  '''
-  Takes in a trained tree and a validation set of examples.  Prunes nodes in order
-  to improve accuracy on the validation data; the precise pruning strategy is up to you.
-  '''
+    '''
+    Takes in a trained tree and a validation set of examples. Prunes nodes in order
+    to improve accuracy on the validation data; the precise pruning strategy is up to you.
+    '''
+    if not node.children:  # base case, leaf node
+        return 
+
+    current_accuracy = test(node, examples)
+
+    keys_to_delete = []  # List to store keys that can be pruned
+
+    for attr_val, child in list(node.children.items()):
+        # Temporarily remove the child
+        temp_child = node.children[attr_val]
+        del node.children[attr_val]
+
+        if test(node, examples) < current_accuracy:
+            # if the test without the node reduces the accuracy, add the node back
+            node.children[attr_val] = temp_child
+        else:
+            # Otherwise, pruned successfully, and we'll set its children to empty
+            keys_to_delete.append(attr_val)
+            child.children = {}
+
+        prune(child, examples)
+
+    # If any nodes were pruned successfully, delete them now.
+    for key in keys_to_delete:
+        if key in node.children:
+            del node.children[key]
+
 
 def test(node, examples):
   '''
@@ -160,8 +194,23 @@ def evaluate(node, example):
 
   if not node.children:
     return node.label
+
   attribute = node.decision_attribute
   attribute_val = example[attribute]
-  if node.children:
+  
+  # Check if the attribute_val is a valid key in node.children
+  if attribute_val in node.children:
     child_node = node.children[attribute_val]
     return evaluate(child_node, example)
+  else:
+    # If the attribute_val doesn't exist in children, 
+    # we might want to return the most common label from current node.
+    # This is just one way to handle it; depending on the context, 
+    # there might be other appropriate ways to handle the situation.
+    return node.label
+
+
+
+
+
+
