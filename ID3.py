@@ -155,21 +155,23 @@ def prune(node, examples):
   
   current_accuracy = test(node, examples)
 
-  no_prunes = True
-  while no_prunes:
-    no_prunes = True
+  pruned = True
+  while pruned:
+    pruned = False
 
-    for n in non_leafs:
-      temp_children = n.children
-      n.children = {}
+    for i in range(len(non_leafs)):
+      temp_children = non_leafs[i].children
+      non_leafs[i].children = {}
 
       if test(node, examples) > current_accuracy:
         current_accuracy = test(node, examples)
-        no_prunes = False
-        non_leafs.remove(n)
-      else:
-        n.children = temp_children
-
+        idx = i
+        pruned = True
+      non_leafs[i].children = temp_children
+    
+    if pruned:
+      non_leafs[idx].children = {}
+      non_leafs.pop(idx)
 
 def test(node, examples):
   '''
