@@ -135,36 +135,41 @@ def ID3(examples, default):
 
 
 def prune(node, examples):
-    '''
-    Takes in a trained tree and a validation set of examples. Prunes nodes in order
-    to improve accuracy on the validation data; the precise pruning strategy is up to you.
-    '''
-    if not node.children:  # base case, leaf node
-        return 
+  '''
+  Takes in a trained tree and a validation set of examples. Prunes nodes in order
+  to improve accuracy on the validation data; the precise pruning strategy is up to you.
+  '''
 
-    current_accuracy = test(node, examples)
+  non_leafs = []
+  unchecked = [node]
 
-    keys_to_delete = []  # List to store keys that can be pruned
+  while unchecked:
+    check_node = unchecked.pop()
+    if check_node.children:
+      non_leafs.append(check_node)
+      unchecked.extend(check_node.children.values())
 
-    for attr_val, child in list(node.children.items()):
-        # Temporarily remove the child
-        temp_child = node.children[attr_val]
-        del node.children[attr_val]
+  if len(non_leafs) == 0:
+    return 
+  
+  current_accuracy = test(node, examples)
 
-        if test(node, examples) < current_accuracy:
-            # if the test without the node reduces the accuracy, add the node back
-            node.children[attr_val] = temp_child
-        else:
-            # Otherwise, pruned successfully, and we'll set its children to empty
-            keys_to_delete.append(attr_val)
-            child.children = {}
+  no_prunes = True
+  while no_prunes:
+    no_prunes = True
 
-        prune(child, examples)
+    for n in non_leafs:
+      temp_children = n.children
+      n.children = {}
 
-    # If any nodes were pruned successfully, delete them now.
-    for key in keys_to_delete:
-        if key in node.children:
-            del node.children[key]
+      if test(node, examples) > current_accuracy:
+        current_accuracy = test(node, examples)
+        no_prunes = False
+        non_leafs.remove(n)
+      else:
+        n.children = temp_children
+  
+  return 
 
 
 def test(node, examples):
