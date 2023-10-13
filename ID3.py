@@ -147,7 +147,8 @@ def prune(node, examples):
     check_node = unchecked.pop()
     if check_node.children:
       non_leafs.append(check_node)
-      unchecked.extend(check_node.children.values())
+      for child in check_node.children.values():
+        unchecked.append(child)
 
   if len(non_leafs) == 0:
     return 
@@ -168,8 +169,6 @@ def prune(node, examples):
         non_leafs.remove(n)
       else:
         n.children = temp_children
-  
-  return 
 
 
 def test(node, examples):
